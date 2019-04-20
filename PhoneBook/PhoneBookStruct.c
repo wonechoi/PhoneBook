@@ -8,30 +8,35 @@ struct contact {
 
 struct bTreeNode {
 	Contact_ptr data;
-	struct bTreeNode* left;
-	struct bTreeNode* right;
+	BTreeNode_ptr left;
+	BTreeNode_ptr right;
 };
 
 BTreeNode_ptr insertPhoneBook(BTreeNode_ptr tree, Contact_ptr contact) {
 
+	// if no node, insert a new node
 	if (!tree) {
 		tree = createNode();
 		setData(tree, contact);
 	}
-	else if (strcmp(contact->firstName, getFirstName(tree)) < 0) {
+	// if the new firstname is smaller than a firstname of current node 
+	else if (strcmp(contact->firstName, getFirstName(tree->data)) < 0) {
 		tree->left = insertPhoneBook(tree->left, contact);
 		tree = rebalance(tree);
 	}
-	else if (strcmp(contact->firstName, getFirstName(tree)) > 0) {
+	// if the new firstname is bigger than a firstname of current node 
+	else if (strcmp(contact->firstName, getFirstName(tree->data)) > 0) {
 		tree->right = insertPhoneBook(tree->right, contact);
 		tree = rebalance(tree);
 	}
 	else {
-		if (strcmp(contact->lastName, getLastName(tree)) < 0) {
+		// if the new lastname is smaller than a lastname of current node 
+		if (strcmp(contact->lastName, getLastName(tree->data)) < 0) {
 			tree->left = insertPhoneBook(tree->left, contact);
 			tree = rebalance(tree);
 		}
-		else if (strcmp(contact->lastName, getLastName(tree)) >= 0) {
+		// if the new lastname is bigger than a lastname of current node 
+		else if (strcmp(contact->lastName, getLastName(tree->data)) >= 0) {
 			tree->right = insertPhoneBook(tree->right, contact);
 			tree = rebalance(tree);
 		}
@@ -58,6 +63,7 @@ Contact_ptr createContact(char* firstName, char* lastName, char* mobile) {
 		return NULL;
 	}
 
+	// if each item doesn't have data
 	if (!firstName || !lastName || !mobile
 		|| strlen(firstName) < 1 || strlen(lastName) < 1 || strlen(mobile) < 1) {
 		return NULL;
@@ -108,19 +114,27 @@ void setRNode(BTreeNode_ptr parent, BTreeNode_ptr child) {
 	parent->right = child;
 }
 
-BTreeNode_ptr searchByFirstName(BTreeNode_ptr node, char* firstName, char* result) {
-
+int ifFullNameIsExisted(BTreeNode_ptr node, char* firstName, char* lastName) {
 	// current node
 	BTreeNode_ptr cNode = node;
 	char* cFirstname;
+	char* cLastname;
 
 	while (cNode != NULL) {
-		cFirstname = getFirstName(cNode);
+		cFirstname = getFirstName(cNode->data);
+		cLastname = getLastName(cNode->data);
 
+		//look for same name
 		if (strcmp(firstName, cFirstname) == 0) {
-			//look for same name
-			lookForSameName(cNode, firstName, result);
-			return cNode;
+			if (strcmp(lastName, cLastname) < 0) {
+				cNode = getLNode(cNode);
+			}
+			else if (strcmp(lastName, cLastname) > 0) {
+				cNode = getRNode(cNode);
+			}
+			else {
+				return TRUE;
+			}
 		}
 		else if (strcmp(firstName, cFirstname) < 0) {
 			cNode = getLNode(cNode);
@@ -129,89 +143,72 @@ BTreeNode_ptr searchByFirstName(BTreeNode_ptr node, char* firstName, char* resul
 			cNode = getRNode(cNode);
 		}
 	}
-	return NULL;
+	return FALSE;
 }
-void lookForSameName(BTreeNode_ptr node, char* firstName, char* result) {
+
+void searchByFirstName(BTreeNode_ptr node, char* firstName, char* result) {
+
+	// current node
+	BTreeNode_ptr cNode = node;
+	char* cFirstname;
+
+	while (cNode != NULL) {
+		cFirstname = getFirstName(cNode->data);
+
+		if (strcmp(firstName, cFirstname) == 0) {
+			//look for other contacts which have same first name
+			lookForSameFirstName(cNode, firstName, result);
+			return;
+		}
+		else if (strcmp(firstName, cFirstname) < 0) {
+			cNode = getLNode(cNode);
+		}
+		else {
+			cNode = getRNode(cNode);
+		}
+	}
+}
+void lookForSameFirstName(BTreeNode_ptr node, char* firstName, char* result) {
 
 	if (!node) {
 		return;
 	}
 
 	BTreeNode_ptr cNode = node;
-	char* cFirstname = getFirstName(node);
+	char* cFirstname = getFirstName(node->data);
 
+	// same firstname could be in the right part of left child
+	// or in the left part of right child
 	if (strcmp(firstName, cFirstname) == 0) {
-		lookForSameName(node->left, firstName, result);
+		lookForSameFirstName(node->left, firstName, result);
 		getContact(node, result);
-		lookForSameName(node->right, firstName, result);
+		lookForSameFirstName(node->right, firstName, result);
 	}
 	else if (strcmp(firstName, cFirstname) < 0) {
-		lookForSameName(node->left, firstName, result);
+		lookForSameFirstName(node->left, firstName, result);
 	}
 	else {
-		lookForSameName(node->right, firstName, result);
+		lookForSameFirstName(node->right, firstName, result);
 	}
 	
 }
 
-BTreeNode_ptr searchByLastName(BTreeNode_ptr node, char* lastName, char** result) {
-
-	// current node
-	BTreeNode_ptr cNode = node;
-	char* cLastname;
-
-	while (cNode != NULL) {
-		cLastname = getLastName(cNode);
-
-		if (strcmp(lastName, cLastname) == 0) {
-			return cNode;
-		}
-		else if (strcmp(lastName, cLastname) < 0) {
-			cNode = getLNode(cNode);
-		}
-		else {
-			cNode = getRNode(cNode);
-		}
-	}
-	return NULL;
-}
-BTreeNode_ptr searchByMobile(BTreeNode_ptr node, char* mobile, char** result) {
-
-	// current node
-	BTreeNode_ptr cNode = node;
-	char* cMobile;
-
-	while (cNode != NULL) {
-		cMobile = getMobile(cNode);
-
-		if (strcmp(mobile, cMobile) == 0) {
-			return cNode;
-		}
-		else if (strcmp(mobile, cMobile) < 0) {
-			cNode = getLNode(cNode);
-		}
-		else {
-			cNode = getRNode(cNode);
-		}
-	}
-	return NULL;
-}
-
 void getContact(BTreeNode_ptr node, char* str) {
-	char* contact = (char*)malloc(1000);
-	sprintf(contact, "%s %s: %s", node->data->firstName, node->data->lastName, node->data->mobile);
+
+	char* contact = (char*)malloc(500);
+	sprintf(contact, "%s %s: %s\n", node->data->firstName, node->data->lastName, node->data->mobile);
 	strcat(str, contact);
 	free(contact);
 }
 
-char* getFirstName(BTreeNode_ptr node) {
-	return node->data->firstName;
+char* getFirstName(Contact_ptr contact) {
+	return contact->firstName;
 }
-char* getLastName(BTreeNode_ptr node) {
-	return node->data->lastName;
+char* getLastName(Contact_ptr contact) {
+	return contact->lastName;
 }
-char* getMobile(BTreeNode_ptr node) {
-	return node->data->mobile;
+char* getMobile(Contact_ptr contact) {
+	return contact->mobile;
 }
 
 BTreeNode_ptr getLNode(BTreeNode_ptr node) {
@@ -232,8 +229,8 @@ BTreeNode_ptr rotate_right(BTreeNode_ptr node) {
 	BTreeNode_ptr child = getLNode(parent);
 
 	// rotate the tree to the right
-	parent->left = getRNode(child); // connect right a subnode of child node to a left subnode of parent
-	child->right = parent; // connect parent node to a right subnode of child node
+	parent->left = getRNode(child); // connect a right subnode of child node to under a left subnode of parent
+	child->right = parent; // connect parent node to under a right subnode of child node
 
 	return child;
 }
@@ -249,8 +246,8 @@ BTreeNode_ptr rotate_left(BTreeNode_ptr node) {
 	BTreeNode_ptr child = getRNode(parent);
 
 	// rotate the tree to the left
-	parent->right = getLNode(child); //connect a left subnode of child node to a left subnode of parent
-	child->left = parent; // connect parent node to left a subnode of child node
+	parent->right = getLNode(child); //connect a left subnode of child node to under a left subnode of parent
+	child->left = parent; // connect parent node to under left a subnode of child node
 
 	return child;
 }
@@ -262,27 +259,36 @@ BTreeNode_ptr rotate_right_left(BTreeNode_ptr node) {
 	return rotate_left(parent); // rotate the tree to the left
 }
 
-BTreeNode_ptr rebalance(BTreeNode_ptr root) {
-	int hDiff = calHDiff(root);
+BTreeNode_ptr rebalance(BTreeNode_ptr node) {
+	int hDiff = calHDiff(node);
 
+	// the difference of heights between the left sub tree and the right sub tree is same with or over than 2
+
+	// if a height of left side is bigger
 	if (hDiff >= 2) {
-		if (calHDiff(getLNode(root)) > 0) {
-			root = rotate_right(root);
+		// if the left sub tree of the child is higher than the right sub tree of the child
+		// rotate sub trees right
+		if (calHDiff(getLNode(node)) > 0) {
+			node = rotate_right(node);
 		}
+		// if the right sub tree of the child is higher than the left sub tree of the child,
+		// just to rotate it right occurs another unbalanced tree
+		// therefore, rotate the sub tree left then rotate parent tree right
 		else {
-			root = rotate_left_right(root);
+			node = rotate_left_right(node);
 		}
 	}
+	// if a height of right side is bigger
 	if (hDiff <= -2) {
-		if (calHDiff(getRNode(root)) < 0) {
-			root = rotate_left(root);
+		if (calHDiff(getRNode(node)) < 0) {
+			node = rotate_left(node);
 		}
 		else {
-			root = rotate_right_left(root);
+			node = rotate_right_left(node);
 		}
 	}
 
-	return root;
+	return node;
 }
 int getHeight(BTreeNode_ptr node) {
 	int leftH, rightH;
@@ -314,14 +320,14 @@ int calHDiff(BTreeNode_ptr node) {
 	return leftH - rightH;
 }
 
-void listAllData(BTreeNode_ptr node, int num) {
+void listAllData(BTreeNode_ptr node, char* result) {
 	if (!node) {
 		return;
 	}
 
-	listAllData(node->left, num);
-	printf("%d. %s %s: %s",num++, getFirstName(node), getLastName(node), getMobile(node));
-	listAllData(node->right, num);
+	listAllData(node->left, result);
+	getContact(node, result);
+	listAllData(node->right, result);
 }
 
 void listAllDataToFile(BTreeNode_ptr node, FILE* fp) {
@@ -329,34 +335,39 @@ void listAllDataToFile(BTreeNode_ptr node, FILE* fp) {
 		return;
 	}
 
+	// Since a inorder traveling lists data ordered, 
+	// it occurs one-sided tree(same with linked list) when the file is uploaded next time
+	// By a pre-order traveling, reduce balancing works when the file is uploded next time.
+	// If the sorted file is needed, only change pro-order to inorder like listAllData()
+	fprintf(fp, "%s,%s,%s", getFirstName(node->data), getLastName(node->data), getMobile(node->data));
 	listAllDataToFile(node->left, fp);
-	fprintf(fp, "%s,%s,%s", getFirstName(node), getLastName(node), getMobile(node));
 	listAllDataToFile(node->right, fp);
 }
 
-BTreeNode_ptr removeContact(BTreeNode_ptr tree, char* firstName, char*lastName) {
+BTreeNode_ptr removeContact(BTreeNode_ptr tree, char* firstName, char*lastName, int* successed) {
 	if (!(tree)) {
 		return tree;
 	}
 	// if the keyword is bigger than the one in current node
-	if (strcmp(firstName, getFirstName(tree)) > 0) {
-		tree->right = removeContact(tree->right, firstName, lastName);
+	if (strcmp(firstName, getFirstName(tree->data)) > 0) {
+		tree->right = removeContact(tree->right, firstName, lastName, successed);
 	}
 	// if the keyword is smaller than the one in current node
-	else if (strcmp(firstName, getFirstName(tree)) < 0) {
-		tree->left = removeContact(tree->left, firstName, lastName);
+	else if (strcmp(firstName, getFirstName(tree->data)) < 0) {
+		tree->left = removeContact(tree->left, firstName, lastName, successed);
 	}
 	else {
-		if (strcmp(lastName, getLastName(tree)) > 0) {
-			tree->right = removeContact(tree->right, firstName, lastName);
+		if (strcmp(lastName, getLastName(tree->data)) > 0) {
+			tree->right = removeContact(tree->right, firstName, lastName, successed);
 		}
 		// if the keyword is smaller than the one in current node
-		else if (strcmp(lastName, getLastName(tree)) < 0) {
-			tree->left = removeContact(tree->left, firstName, lastName);
+		else if (strcmp(lastName, getLastName(tree->data)) < 0) {
+			tree->left = removeContact(tree->left, firstName, lastName, successed);
 		}
 		else {
 			// current node including same keyword
 			BTreeNode_ptr cNode = tree;
+			*successed = TRUE;
 
 			// if current node has both left and right sub trees
 			if ((tree->left) && (tree->right)) {
@@ -386,62 +397,25 @@ BTreeNode_ptr removeContact(BTreeNode_ptr tree, char* firstName, char*lastName) 
 			else if (tree->right) {
 				tree = tree->right;
 			}
-			free(cNode);
+			else {
+				freeNode(tree);
+				return NULL;
+			}
 		}
 	}
 	return tree;
 }
 
-/*
-BTreeNode_ptr removeContact(BTreeNode_ptr tree, Contact_ptr contact) {
-	if (!(tree)) {
-		return tree;
-	}
-	// if the keyword is bigger than the one in current node
-	if (strcmp(contact->firstName, getFirstName(tree)) > 0) {
-		tree->right = removeContact(tree->right, contact);
-	}
-	// if the keyword is smaller than the one in current node
-	else if (strcmp(contact->firstName, getFirstName(tree)) < 0) {
-		tree->left = removeContact(tree->left, contact);
-	}
-	//// if the keyword is same with the one in current node
-	else {
-		// current node including same keyword
-		BTreeNode_ptr cNode = tree;
+void freeNode(BTreeNode_ptr tree) {
+	free(tree->data->firstName);
+	free(tree->data->lastName);
+	free(tree->data->mobile);
+	free(tree->data);
 
-		// if current node has both left and right sub trees
-		if ((tree->left) && (tree->right)) {
-			BTreeNode_ptr parent = tree->left;
-			tree = parent->right;
-			if (tree) {
-				// get the biggest node in its left sub tree
-				while (tree->right) {
-					parent = tree;
-					tree = tree->right;
-				}
-				// replace the current node with the biggest node.
-				parent->right = tree->left;
-				tree->left = cNode->left;
-			}
-			else {
-				tree = parent;
-			}
-			tree->right = cNode->right;
-
-		}
-		// if current node has only a left sub tree
-		else if (tree->left) {
-			tree = tree->left;
-		}
-		// if current node has only a right sub tree
-		else if (tree->right) {
-			tree = tree->right;
-		}
-		free(cNode);
-	}
-	return tree;
-}*/
+	free(tree->left);
+	free(tree->right);
+	free(tree);
+}
 
 char* toUpperStr(char* str) {
 	char* lowStr = str;

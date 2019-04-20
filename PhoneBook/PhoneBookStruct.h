@@ -39,21 +39,17 @@ void setLNode(BTreeNode_ptr parent, BTreeNode_ptr child);
 void setRNode(BTreeNode_ptr parent, BTreeNode_ptr child);
 
 // search data with a first name
-BTreeNode_ptr searchByFirstName(BTreeNode_ptr tree, char* firstName, char* result);
-void lookForSameName(BTreeNode_ptr node, char* firstName, char* result);
-// search data with a last name
-BTreeNode_ptr searchByLastName(BTreeNode_ptr tree, char* firstName, char** result);
-// search data with a mobile
-BTreeNode_ptr searchByMobile(BTreeNode_ptr tree, char* firstName, char** result);
+void searchByFirstName(BTreeNode_ptr tree, char* firstName, char* result);
+void lookForSameFirstName(BTreeNode_ptr node, char* firstName, char* result);
 
 // print Contact
 void getContact(BTreeNode_ptr node, char* str);
-// get first name of a node
-char* getFirstName(BTreeNode_ptr node);
-// get first name of a node
-char* getLastName(BTreeNode_ptr node);
-// get first name of a node
-char* getMobile(BTreeNode_ptr node);
+// get first name of a contact
+char* getFirstName(Contact_ptr contact);
+// get last name of a contact
+char* getLastName(Contact_ptr contact);
+// get mobile of a contact
+char* getMobile(Contact_ptr contact);
 
 // return an address of left node of a node
 BTreeNode_ptr getLNode(BTreeNode_ptr node);
@@ -71,20 +67,20 @@ BTreeNode_ptr rotate_right_left(BTreeNode_ptr node);
 
 // check if there is difference over 2 between left height and right heignt
 // if then, rebalance the tree
-BTreeNode_ptr rebalance(BTreeNode_ptr root);
+BTreeNode_ptr rebalance(BTreeNode_ptr node);
 // return height of a tree
 int getHeight(BTreeNode_ptr node);
 // return the difference of heights between two sub trees
 int calHDiff(BTreeNode_ptr node);
 
 // show every data in the phone book
-void listAllData(BTreeNode_ptr node);
+void listAllData(BTreeNode_ptr node, char* result);
 // show every data in the file
 void listAllDataToFile(BTreeNode_ptr node, FILE* fp);
 
 // remove node
-BTreeNode_ptr removeContact(BTreeNode_ptr tree, Contact_ptr contact);
-
+BTreeNode_ptr removeContact(BTreeNode_ptr tree, char* firstName, char*lastName, int* successed);
+void freeNode(BTreeNode_ptr tree);
 char* toUpperStr(char* str);
 
 #endif 

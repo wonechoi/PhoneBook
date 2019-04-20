@@ -1,7 +1,7 @@
 ﻿#include "PhoneBookUI.h"
 
 void setWindowSize() {
-	system("mode con cols=64 lines=40");
+	system("mode con cols=64 lines=41");
 }
 
 void printAtXY(int x, int y, char* s) {
@@ -16,6 +16,7 @@ void drawMain() {
 }
 
 void drawBorder() {
+	system("cls");
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 2);
 	
 	int i;
@@ -37,7 +38,9 @@ void drawBorder() {
 
 void writeTitle() {
 
+	// color green
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 9);
+
 	// first row
 	printAtXY(4, 3, "■");
 	printAtXY(5, 3, "■");
@@ -182,23 +185,25 @@ void writeTitle() {
 	printAtXY(21, 15, "■");
 	printAtXY(24, 15, "■");
 
-	printAtXY(15, 33, "BY");
-	printAtXY(13, 35, "HYEWON CHOI");
-	printAtXY(12, 36, "JEFFREY ODOGBA");
+	printAtXY(15, 34, "BY");
+	printAtXY(13, 36, "HYEWON CHOI");
+	printAtXY(12, 37, "JEFFREY ODOGBA");
 
 }
 
 void writeHowtoUse() {
+
+	// color blue
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 2);
 
 	printAtXY(13, 19, "How to use");
 	printAtXY(4, 21, "-r retrieve data with followed firstname.");
 	printAtXY(4, 22, "-s show all contacts ordered by firstname.");
-	printAtXY(4, 24, "-a add new data. firstname,lastname,mobile");
-	printAtXY(4, 25, "-l load a following file name.");
-	printAtXY(4, 26, "-w write the phone book to a new file.");
-	printAtXY(4, 27, "   The name of file is following");
-	printAtXY(4, 28, "-e Exit the phone book");
+	printAtXY(4, 23, "-a add new data. firstname,lastname,mobile");
+	printAtXY(4, 24, "-l load a following file name.");
+	printAtXY(4, 25, "-w write the phone book to a new file.");
+	printAtXY(4, 26, "   The name of file is following");
+	printAtXY(4, 27, "-e Exit the phone book");
 }
 
 void writeLoading() {
@@ -209,42 +214,79 @@ void writeLoading() {
 }
 
 void initUserCommandLine() {
-	printAtXY(4, 31, "                     ");
-	printAtXY(5, 31, "                     ");
+	// clear the line a user enters their request
+	printAtXY(4, 30, "                     ");
 
-	COORD pos = { 8, 31 };
+	COORD pos = { 8, 30 };
 	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
 
 }
 
-void printRetrivingResult(char* result) {
-	system("cls");
+int printRetrivingResult(char* result) {
+
 	drawBorder();
 
 	const char* delim = "\n";
 	char* line = strtok(result, delim);
 	int lineN = 4;
 
+
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 9);
 	while (line != NULL) {
-		printAtXY(4, lineN, line);
+		printAtXY(4, lineN++, line);
+		
+		// if the number of data is over than height of screen,
+		// print the rest on the next page.
+		if (lineN > 33) {
+			
+			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 2);
+			printAtXY(4, ++lineN, "Press Enter to continue in the next page.");
+			
+			//buffer clear
+			while ((getchar()) != '\n');
+
+			lineN = 4;
+
+			drawBorder();
+			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 9);
+		}
 		line = strtok(NULL, delim);
-		lineN++;
 	}
 
-	printEDMenu(lineN+1);
+	// room for additional menu
+	if (lineN > 29) {
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 2);
+		printAtXY(4, ++lineN, "Press Enter to continue in the next page.");
+
+		//buffer clear
+		while ((getchar()) != '\n');
+
+		lineN = 3;
+
+		drawBorder();
+	}
+
+	line++;
+	printEDMenu(&lineN);
+
+	return lineN;
 }
 
-void printEDMenu(int lineN) {
+void printEDMenu(int* lineN) {
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 2);
 
-	printAtXY(4, lineN,	  "-e edit data. The number of data should be following.");
-	printAtXY(4, ++lineN, "   format: firstname, lastname, mobile.");
-	printAtXY(4, ++lineN, "-d delete data. The number of data should be following.");
-	printAtXY(4, ++lineN, "-b back to main menu.");
+	printAtXY(4, ++(*lineN),  "-e edit data.");
+	printAtXY(4, ++(*lineN), "   firstname,lastname/newFirst,newLast,newMobile");
+	printAtXY(4, ++(*lineN), "-d delete data.");
+	printAtXY(4, ++(*lineN), "   firstname,lastname");
+	printAtXY(4, ++(*lineN), "-b back to main menu.");
+
+	printAtXY(4, ++(*lineN), " ");
+	printAtXY(4, ++(*lineN), "");
 }
 
 void exitMessage(int ifchanged) {
+	// if data has been changed
 	if (ifchanged == TRUE) {
 		printAtXY(4, 31, "Saving changed data");
 		Sleep(1000);
@@ -255,4 +297,6 @@ void exitMessage(int ifchanged) {
 	}
 }
 
-
+void holdTwoSecs() {
+	Sleep(2000);
+}
